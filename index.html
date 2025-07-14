@@ -274,7 +274,21 @@
   <!-- main script file  -->
   <script src="./assets/js/argon-dashboard-tailwind.js?v=1.0.1" async></script>
   <script>
-const API_KEY = 'ur2855272-4026a39e7dcc2473426b4f0c';
+
+
+
+// Replace with your actual API key
+
+
+// You can get your API key from https://uptimerobot.com/manage_api_keys
+
+
+const API_KEY = 'ur2855272-4026a39e7dcc2473426b4f0c';       //API key for UptimeRobot
+
+
+
+
+
 const API_URL = 'https://api.uptimerobot.com/v2/getMonitors';
 const REFRESH_INTERVAL = 30000; // 30 seconds
 let monitors = [];
@@ -343,7 +357,7 @@ function updateGraphForMonitor(monitor) {
   const labels = data.map(d => d.x.toLocaleTimeString());
   const values = data.map(d => d.y);
   lastUptimeRatios = [...values];
-  document.getElementById('graph-title').textContent = monitor.friendly_name + ' Uptime';
+  document.getElementById('graph-title').textContent = monitor.friendly_name + ' ';
   document.getElementById('graph-desc').innerHTML = `<span class='font-semibold'>${monitor.url}</span>`;
   if (chart) chart.destroy();
   chart = new Chart(ctx, {
