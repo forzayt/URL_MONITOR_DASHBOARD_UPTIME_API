@@ -25,6 +25,7 @@
     color: #2563eb; /* Tailwind blue-600 */
     transition: color 0.3s;
   }
+ 
   #countdown-timer.low {
     color: #dc2626; /* Tailwind red-600 */
     animation: pulse 1s infinite;
@@ -70,14 +71,7 @@
       <nav class="relative flex flex-wrap items-center justify-between px-0 py-2 mx-6 transition-all ease-in shadow-none duration-250 rounded-2xl lg:flex-nowrap lg:justify-start" navbar-main navbar-scroll="false">
         <div class="flex items-center justify-between w-full px-4 py-1 mx-auto flex-wrap-inherit">
           <nav>
-            <!-- breadcrumb -->
-            <ol class="flex flex-wrap pt-1 mr-12 bg-transparent rounded-lg sm:mr-16">
-              <li class="text-sm leading-normal">
-                <a class="text-white opacity-50" href="javascript:;">Pages</a>
-              </li>
-              <li class="text-sm pl-2 capitalize leading-normal text-white before:float-left before:pr-2 before:text-white before:content-['/']" aria-current="page">Dashboard</li>
-            </ol>
-            <h6 class="mb-0 font-bold text-white capitalize">Dashboard</h6>
+            <span id="navbar-clock" class="mb-0 font-bold text-white text-lg"></span>
           </nav>
 
           <div class="flex items-center mt-2 grow sm:mt-0 sm:mr-6 md:mr-0 lg:flex lg:basis-auto">
@@ -653,9 +647,11 @@ function updateLastUpdated() {
   const el = document.getElementById('last-updated');
   if (el) {
     const now = new Date();
-    const next = new Date(now.getTime() + REFRESH_INTERVAL);
+    let next = nextUpdateTimestamp ? new Date(nextUpdateTimestamp) : new Date(now.getTime() + REFRESH_INTERVAL);
+    let secondsLeft = Math.max(0, Math.round((next - now) / 1000));
     el.textContent = 'Last updated: ' + now.toLocaleTimeString() +
-      ' | Next update: ' + next.toLocaleTimeString();
+      ' | Next update in: ' + secondsLeft + 's';
+    console.log('updateLastUpdated called, secondsLeft:', secondsLeft); // Debug
   }
 }
 
@@ -735,29 +731,64 @@ init = async function() {
   updateMainGraphOnSelection();
 }
 
+// --- Clean, robust refreshData and init implementations ---
 async function refreshData() {
-  const newMonitors = await fetchMonitors();
-  if (selectedMonitor) {
-    const updated = newMonitors.find(m => m.id === selectedMonitor.id);
-    if (updated) {
-      updateGraphForMonitor(updated); // Always update with new data
+  try {
+    const newMonitors = await fetchMonitors();
+    if (!Array.isArray(newMonitors) || newMonitors.length === 0) {
+      console.warn("❌ Refresh failed: No monitor data received or API rate-limited at", new Date().toLocaleTimeString());
+      return; // Skip UI updates
     }
+    monitors = newMonitors;
+
+    // Update selectedMonitor if possible
+    if (selectedMonitor) {
+      const updated = monitors.find(m => m.id === selectedMonitor.id);
+      if (updated) {
+        selectedMonitor = updated;
+      } else {
+        selectedMonitor = monitors[0];
+      }
+    } else {
+      selectedMonitor = monitors[0];
+    }
+
+    renderMonitorList(monitors);
+    renderSidebarMonitorList(monitors);
+    renderMainGraph(selectedMonitor);
+    startCountdown();
+    console.log("✅ Refreshed at", new Date().toLocaleTimeString());
+  } catch (err) {
+    console.error("❌ Refresh failed due to error:", err, "at", new Date().toLocaleTimeString());
+    // Do not update UI
   }
-  monitors = newMonitors;
-  renderMonitorList(monitors);
 }
 
-// --- Restore selected monitor on load ---
 async function init() {
-  monitors = await fetchMonitors();
-  let savedId = getSavedSelectedMonitorId();
-  if (monitors.length > 0) {
+  try {
+    monitors = await fetchMonitors();
+    if (!Array.isArray(monitors) || monitors.length === 0) {
+      console.warn("❌ Initial load failed: No monitor data received or API rate-limited at", new Date().toLocaleTimeString());
+      startCountdown();
+      setInterval(refreshData, REFRESH_INTERVAL);
+      return;
+    }
+
+    // Restore selected monitor from localStorage if possible
+    let savedId = getSavedSelectedMonitorId();
     selectedMonitor = monitors.find(m => m.id == savedId) || monitors[0];
+
     renderMonitorList(monitors);
-    updateGraphForMonitor(selectedMonitor);
-    lastUpdateTime = Date.now();
+    renderSidebarMonitorList(monitors);
+    renderMainGraph(selectedMonitor);
+    startCountdown();
+    setInterval(refreshData, REFRESH_INTERVAL);
+    console.log("✅ Initial load complete at", new Date().toLocaleTimeString());
+  } catch (err) {
+    console.error("❌ Initial load failed due to error:", err, "at", new Date().toLocaleTimeString());
+    startCountdown();
+    setInterval(refreshData, REFRESH_INTERVAL);
   }
-  setInterval(refreshData, REFRESH_INTERVAL);
 }
 
 // Remove unused function
@@ -768,19 +799,37 @@ function renderSidebarMonitorList(monitors) {
 
 let countdown = REFRESH_INTERVAL / 1000;
 let countdownInterval = null;
+let nextUpdateTimestamp = null; // Track next update time
+let lastUpdatedInterval = null; // Interval for updating 'Last updated' section
 
 function startCountdown() {
   const timerEl = document.getElementById('countdown-timer');
   if (!timerEl) return;
-  if (countdownInterval) clearInterval(countdownInterval);
-  countdown = REFRESH_INTERVAL / 1000;
+  if (lastUpdatedInterval) clearInterval(lastUpdatedInterval);
+  nextUpdateTimestamp = Date.now() + REFRESH_INTERVAL;
+
+  // Start live update for 'Last updated' section
+  function updateNextUpdateUI() {
+    const el = document.getElementById('last-updated');
+    if (!el) return;
+    const now = new Date();
+    let secondsLeft = Math.max(0, Math.round((nextUpdateTimestamp - now.getTime()) / 1000));
+    el.textContent = 'Last updated: ' + now.toLocaleTimeString() +
+      ' | Next update in: ' + secondsLeft + 's';
+  }
+  lastUpdatedInterval = setInterval(updateNextUpdateUI, 1000);
+  updateNextUpdateUI(); // Initial call
+
+  // (Keep the top countdown timer logic as is)
+  if (window.countdownInterval) clearInterval(window.countdownInterval);
+  let countdown = REFRESH_INTERVAL / 1000;
   timerEl.textContent = `Next update in: ${countdown}s`;
   timerEl.classList.remove('low');
-  countdownInterval = setInterval(() => {
+  window.countdownInterval = setInterval(() => {
     countdown--;
     if (countdown <= 0) {
       countdown = 0;
-      clearInterval(countdownInterval);
+      clearInterval(window.countdownInterval);
     }
     timerEl.textContent = `Next update in: ${countdown}s`;
     if (countdown <= 10) {
@@ -862,5 +911,23 @@ document.addEventListener('DOMContentLoaded', function() {
 //   window.location.reload();
 // }, 60000); // 60000 ms = 1 minute
 
+</script>
+<script>
+  function updateNavbarClock() {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    const hourStr = String(hours).padStart(2, '0');
+    const clockEl = document.getElementById('navbar-clock');
+    if (clockEl) {
+      clockEl.textContent = `${hourStr}:${minutes}:${seconds} ${ampm}`;
+    }
+  }
+  setInterval(updateNavbarClock, 1000);
+  updateNavbarClock();
 </script>
 </html>
