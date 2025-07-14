@@ -400,8 +400,9 @@ function renderMonitorList(monitors) {
     li.onclick = (e) => {
       e.preventDefault();
       selectedMonitor = monitor;
+      saveSelectedMonitorId(selectedMonitor.id);
       renderMonitorList(monitors);
-      updateGraphForMonitor(monitor);
+      updateGraphForMonitor(selectedMonitor);
     };
     list.appendChild(li);
 
@@ -446,8 +447,9 @@ function renderMonitorList(monitors) {
     `;
     tr.onclick = (e) => {
       selectedMonitor = monitor;
+      saveSelectedMonitorId(selectedMonitor.id);
       renderMonitorList(monitors);
-      updateGraphForMonitor(monitor);
+      updateGraphForMonitor(selectedMonitor);
     };
     tr.style.cursor = 'pointer';
     tableBody.appendChild(tr);
@@ -661,10 +663,61 @@ function updateMainGraphOnSelection() {
   if (selectedMonitor) renderMainGraph(selectedMonitor);
 }
 
-// Patch renderMonitorList to update main graph on selection
-const origRenderMonitorList = renderMonitorList;
+// --- Monitor Selection Persistence ---
+function saveSelectedMonitorId(id) {
+  try {
+    localStorage.setItem('selectedMonitorId', id);
+  } catch (e) {}
+}
+function getSavedSelectedMonitorId() {
+  try {
+    return localStorage.getItem('selectedMonitorId');
+  } catch (e) { return null; }
+}
+// --- Fullscreen State Persistence ---
+function saveFullscreenState(isFullscreen) {
+  try {
+    localStorage.setItem('wasFullscreen', isFullscreen ? '1' : '0');
+  } catch (e) {}
+}
+function getSavedFullscreenState() {
+  try {
+    return localStorage.getItem('wasFullscreen') === '1';
+  } catch (e) { return false; }
+}
+// --- Patch monitor selection to save state ---
+function patchMonitorSelection(monitors) {
+  // Patch sidebar monitor list
+  const list = document.getElementById('monitor-list');
+  if (!list) return;
+  Array.from(list.children).forEach((li, idx) => {
+    li.onclick = (e) => {
+      e.preventDefault();
+      selectedMonitor = monitors[idx];
+      saveSelectedMonitorId(selectedMonitor.id);
+      renderMonitorList(monitors);
+      updateGraphForMonitor(selectedMonitor);
+    };
+  });
+  // Patch table selection
+  const tableBody = document.getElementById('monitors-table-body');
+  if (tableBody) {
+    Array.from(tableBody.children).forEach((tr, idx) => {
+      tr.onclick = (e) => {
+        selectedMonitor = monitors[idx];
+        saveSelectedMonitorId(selectedMonitor.id);
+        renderMonitorList(monitors);
+        updateGraphForMonitor(selectedMonitor);
+      };
+      tr.style.cursor = 'pointer';
+    });
+  }
+}
+// Patch renderMonitorList to call patchMonitorSelection
+const origRenderMonitorList2 = renderMonitorList;
 renderMonitorList = function(monitors) {
-  origRenderMonitorList(monitors);
+  origRenderMonitorList2(monitors);
+  patchMonitorSelection(monitors);
   updateMainGraphOnSelection();
 }
 
@@ -694,10 +747,12 @@ async function refreshData() {
   renderMonitorList(monitors);
 }
 
+// --- Restore selected monitor on load ---
 async function init() {
   monitors = await fetchMonitors();
+  let savedId = getSavedSelectedMonitorId();
   if (monitors.length > 0) {
-    selectedMonitor = monitors[0];
+    selectedMonitor = monitors.find(m => m.id == savedId) || monitors[0];
     renderMonitorList(monitors);
     updateGraphForMonitor(selectedMonitor);
     lastUpdateTime = Date.now();
@@ -761,8 +816,10 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateBtnText() {
     if (!document.fullscreenElement) {
       btnText.textContent = 'Fullscreen';
+      saveFullscreenState(false);
     } else {
       btnText.textContent = 'Exit Fullscreen';
+      saveFullscreenState(true);
     }
   }
   if (btn) {
@@ -778,7 +835,32 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('fullscreenchange', updateBtnText);
     updateBtnText();
   }
+  // Show prompt if user was in fullscreen before reload
+  if (getSavedFullscreenState() && !document.fullscreenElement) {
+    let prompt = document.createElement('div');
+    prompt.style.position = 'fixed';
+    prompt.style.top = '20px';
+    prompt.style.right = '20px';
+    prompt.style.background = '#2563eb';
+    prompt.style.color = 'white';
+    prompt.style.padding = '12px 20px';
+    prompt.style.borderRadius = '8px';
+    prompt.style.zIndex = 9999;
+    prompt.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+    prompt.innerHTML = 'You were in fullscreen before reload. <button id="reenter-fs-btn" style="margin-left:10px;padding:4px 12px;background:white;color:#2563eb;border:none;border-radius:4px;cursor:pointer;">Re-enter Fullscreen</button>';
+    document.body.appendChild(prompt);
+    document.getElementById('reenter-fs-btn').onclick = function() {
+      document.documentElement.requestFullscreen();
+      prompt.remove();
+    };
+    setTimeout(() => { if (prompt.parentNode) prompt.remove(); }, 15000);
+  }
 });
+
+// Auto-reload the page every 1 minute
+setInterval(() => {
+  window.location.reload();
+}, 60000); // 60000 ms = 1 minute
 
 </script>
 </html>
