@@ -183,6 +183,16 @@
 
       <!-- Main Content -->
       <div class="w-full p-6">
+        <!-- Filter Options -->
+        <div class="mb-4 flex items-center gap-2">
+          <label for="graph-range" class="font-semibold text-sm text-blue-gray-600">Show:</label>
+          <select id="graph-range" class="border rounded px-2 py-1 text-sm">
+            <option value="hour">Last Hour</option>
+            <option value="day">Last Day</option>
+            <option value="month">Last Month</option>
+            <option value="year">Last Year</option>
+          </select>
+        </div>
         <!-- Countdown Timer -->
         <div id="countdown-timer" class="mb-4 text-right text-sm text-blue-600 font-semibold"></div>
         <!-- Graph Section -->
@@ -556,11 +566,19 @@ function renderMainGraph(monitor) {
   const ctx = canvas.getContext('2d');
   let data = [];
   let labels = [];
+  // --- Filter logic ---
+  let range = getSavedGraphRange() || 'hour';
+  const now = Date.now() / 1000; // seconds
+  let cutoff = 0;
+  if (range === 'hour') cutoff = now - 60 * 60;
+  else if (range === 'day') cutoff = now - 60 * 60 * 24;
+  else if (range === 'month') cutoff = now - 60 * 60 * 24 * 30;
+  else if (range === 'year') cutoff = now - 60 * 60 * 24 * 365;
   if (monitor && monitor.response_times && monitor.response_times.length > 0) {
-    const points = monitor.response_times.slice(-50);
+    let points = monitor.response_times.filter(rt => rt.datetime >= cutoff);
+    if (points.length === 0) points = monitor.response_times.slice(-50); // fallback
     data = points.map(rt => rt.value);
     labels = points.map(rt => new Date(rt.datetime * 1000).toLocaleTimeString());
-    // Flip to show oldest to latest (left to right)
     data = data.reverse();
     labels = labels.reverse();
   }
@@ -670,6 +688,17 @@ function saveSelectedMonitorId(id) {
 function getSavedSelectedMonitorId() {
   try {
     return localStorage.getItem('selectedMonitorId');
+  } catch (e) { return null; }
+}
+// --- Graph Range Persistence ---
+function saveGraphRange(range) {
+  try {
+    localStorage.setItem('graphRange', range);
+  } catch (e) {}
+}
+function getSavedGraphRange() {
+  try {
+    return localStorage.getItem('graphRange');
   } catch (e) { return null; }
 }
 // --- Fullscreen State Persistence ---
@@ -854,6 +883,19 @@ init = async function() {
 // Start the application
 init();
 
+// --- Graph Range Filter Event ---
+document.addEventListener('DOMContentLoaded', function() {
+  const rangeSel = document.getElementById('graph-range');
+  if (!rangeSel) return;
+  // Restore saved value
+  const saved = getSavedGraphRange();
+  if (saved) rangeSel.value = saved;
+  rangeSel.addEventListener('change', function() {
+    saveGraphRange(rangeSel.value);
+    if (selectedMonitor) renderMainGraph(selectedMonitor);
+  });
+});
+
 // Fullscreen toggle logic
 document.addEventListener('DOMContentLoaded', function() {
   const btn = document.getElementById('fullscreen-toggle');
@@ -927,3 +969,4 @@ document.addEventListener('DOMContentLoaded', function() {
   updateNavbarClock();
 </script>
 </html>
+
