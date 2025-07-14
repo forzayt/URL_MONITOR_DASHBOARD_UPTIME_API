@@ -65,12 +65,9 @@
 
           <div class="flex items-center mt-2 grow sm:mt-0 sm:mr-6 md:mr-0 lg:flex lg:basis-auto">
             <div class="flex items-center md:ml-auto md:pr-4">
-              <div class="relative flex flex-wrap items-stretch w-full transition-all rounded-lg ease">
-                <span class="text-sm ease leading-5.6 absolute z-50 -ml-px flex h-full items-center whitespace-nowrap rounded-lg rounded-tr-none rounded-br-none border border-r-0 border-transparent bg-transparent py-2 px-2.5 text-center font-normal text-slate-500 transition-all">
-                  <i class="fas fa-search"></i>
-                </span>
-                <input type="text" class="pl-9 text-sm focus:shadow-primary-outline ease w-1/100 leading-5.6 relative -ml-px block min-w-0 flex-auto rounded-lg border border-solid border-gray-300 dark:bg-slate-850 dark:text-white bg-white bg-clip-padding py-2 pr-3 text-gray-700 transition-all placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:transition-shadow" placeholder="Type here..." />
-              </div>
+              <button id="fullscreen-toggle" class="px-6 py-2 rounded-full font-bold text-base shadow-lg bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white hover:scale-105 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:from-blue-700 dark:via-purple-700 dark:to-pink-700 dark:text-white" title="Toggle Fullscreen">
+                <span id="fullscreen-btn-text">Fullscreen</span>
+              </button>
             </div>
             <ul class="flex flex-row justify-end pl-0 mb-0 list-none md-max:w-full">
            
@@ -550,6 +547,9 @@ function renderMainGraph(monitor) {
     const points = monitor.response_times.slice(-50);
     data = points.map(rt => rt.value);
     labels = points.map(rt => new Date(rt.datetime * 1000).toLocaleTimeString());
+    // Flip to show oldest to latest (left to right)
+    data = data.reverse();
+    labels = labels.reverse();
   }
   // Remove previous chart instance if any
   if (mainGraphChart && typeof mainGraphChart.destroy === 'function') {
@@ -729,6 +729,32 @@ init = async function() {
 
 // Start the application
 init();
+
+// Fullscreen toggle logic
+document.addEventListener('DOMContentLoaded', function() {
+  const btn = document.getElementById('fullscreen-toggle');
+  const btnText = document.getElementById('fullscreen-btn-text');
+  function updateBtnText() {
+    if (!document.fullscreenElement) {
+      btnText.textContent = 'Fullscreen';
+    } else {
+      btnText.textContent = 'Exit Fullscreen';
+    }
+  }
+  if (btn) {
+    btn.addEventListener('click', function() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    });
+    document.addEventListener('fullscreenchange', updateBtnText);
+    updateBtnText();
+  }
+});
 
 </script>
 </html>
