@@ -25,7 +25,9 @@
     color: #2563eb; /* Tailwind blue-600 */
     transition: color 0.3s;
   }
- 
+ body{
+  cursor: crosshair;
+ }
   #countdown-timer.low {
     color: #dc2626; /* Tailwind red-600 */
     animation: pulse 1s infinite;
@@ -823,7 +825,7 @@ function startCountdown() {
   // (Keep the top countdown timer logic as is)
   if (window.countdownInterval) clearInterval(window.countdownInterval);
   let countdown = REFRESH_INTERVAL / 1000;
-  timerEl.textContent = `Next update in: ${countdown}s`;
+  
   timerEl.classList.remove('low');
   window.countdownInterval = setInterval(() => {
     countdown--;
@@ -831,7 +833,7 @@ function startCountdown() {
       countdown = 0;
       clearInterval(window.countdownInterval);
     }
-    timerEl.textContent = `Next update in: ${countdown}s`;
+
     if (countdown <= 10) {
       timerEl.classList.add('low');
     } else {
