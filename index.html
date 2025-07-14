@@ -330,22 +330,13 @@
   <script src="./assets/js/plugins/perfect-scrollbar.min.js" async></script>
   <!-- main script file  -->
   <script src="./assets/js/argon-dashboard-tailwind.js?v=1.0.1" async></script>
+  <script src="key.js"></script>
   <script>
 
 
 
-// Replace with your actual API key
-
-
-// You can get your API key from https://uptimerobot.com/manage_api_keys
-
-
-const API_KEY = 'ur2855272-4026a39e7dcc2473426b4f0c';       //API key for UptimeRobot
-
-
-
-
-
+// Use window.UPTIMEROBOT_API_KEY loaded from key.js
+const API_KEY = window.UPTIMEROBOT_API_KEY;
 const API_URL = 'https://api.uptimerobot.com/v2/getMonitors';
 const REFRESH_INTERVAL = 60000; // Increased to 60 seconds to avoid rate limit
 let monitors = [];
