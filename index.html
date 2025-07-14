@@ -822,23 +822,17 @@ function startCountdown() {
   lastUpdatedInterval = setInterval(updateNextUpdateUI, 1000);
   updateNextUpdateUI(); // Initial call
 
-  // (Keep the top countdown timer logic as is)
   if (window.countdownInterval) clearInterval(window.countdownInterval);
   let countdown = REFRESH_INTERVAL / 1000;
-  
-  timerEl.classList.remove('low');
+  // Remove timerEl.classList.remove('low');
   window.countdownInterval = setInterval(() => {
     countdown--;
     if (countdown <= 0) {
       countdown = 0;
       clearInterval(window.countdownInterval);
     }
-
-    if (countdown <= 10) {
-      timerEl.classList.add('low');
-    } else {
-      timerEl.classList.remove('low');
-    }
+    // Remove the logic that adds/removes the 'low' class
+    // Only update the text, do not change color or animate
   }, 1000);
 }
 
