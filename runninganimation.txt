@@ -1,0 +1,1053 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="apple-touch-icon" sizes="76x76" href="./assets/img/apple-icon.png" />
+    <link rel="icon" type="image/png" href="./assets/img/favicon.png" />
+    <title>Server Status</title>
+    <!--     Fonts and icons     -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet" />
+    <!-- Font Awesome Icons -->
+    <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
+    <!-- Nucleo Icons -->
+    <link href="./assets/css/nucleo-icons.css" rel="stylesheet" />
+    <!-- Replace the broken kit with this working free CDN: -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-ZUfd7k7/..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <link href="./assets/css/nucleo-svg.css" rel="stylesheet" />
+    <!-- Popper -->
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <!-- Main Styling -->
+    <link href="./assets/css/argon-dashboard-tailwind.css?v=1.0.1" rel="stylesheet" />
+    <style>
+  #countdown-timer {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2563eb; /* Tailwind blue-600 */
+    transition: color 0.3s;
+  }
+ body{
+  cursor: crosshair;
+ }
+ #navbar-clock{
+  font-size: 30px;
+ }
+  #countdown-timer.low {
+    color: #dc2626; /* Tailwind red-600 */
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+</style>
+  </head>
+
+  <body class="m-0 font-sans text-base antialiased font-normal leading-default bg-blue-500 text-slate-500 dark:bg-slate-900">
+    <!-- Full blue background applied via body class or CSS -->
+    <!-- sidenav  -->
+    <aside class="fixed inset-y-0 flex-wrap items-center justify-between block w-full p-0 my-4 overflow-y-auto antialiased transition-transform duration-200 -translate-x-full bg-white border-0 shadow-xl dark:shadow-none dark:bg-slate-850 max-w-64 ease-nav-brand z-990 xl:ml-6 rounded-2xl xl:left-0 xl:translate-x-0" aria-expanded="false">
+      <div class="h-19">
+        <i class="absolute top-0 right-0 p-4 opacity-50 cursor-pointer fas fa-times dark:text-white text-slate-400 xl:hidden" sidenav-close></i>
+        <a class="block px-8 py-6 m-0 text-sm whitespace-nowrap dark:text-white text-slate-700" href="#">
+          <img src="./assets/img/logo-ct-dark.png" class="inline h-full max-w-full transition-all duration-200 dark:hidden ease-nav-brand max-h-8" alt="main_logo" />
+          <img src="./assets/img/logo-ct.png" class="hidden h-full max-w-full transition-all duration-200 dark:inline ease-nav-brand max-h-8" alt="main_logo" />
+          <span class="ml-1 font-semibold transition-all duration-200 ease-nav-brand">Server Status</span>
+        </a>
+        <!-- Monitor list with fixed alignment -->
+        <div class="mt-2">
+          <ul id="monitor-list" class="flex flex-col pl-0 mb-0"></ul>
+        </div>
+      </div>
+
+      <hr class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent" />
+
+      <div class="items-center block w-auto max-h-screen overflow-auto h-sidenav grow basis-full">
+        <ul id="sidebar-monitor-list" class="flex flex-col pl-0 mb-0"></ul>
+      </div>
+
+    
+    </aside>
+
+    <!-- end sidenav -->
+
+    <main class="relative h-full max-h-screen transition-all duration-200 ease-in-out xl:ml-68 rounded-xl">
+      <!-- Navbar -->
+      <nav class="relative flex flex-wrap items-center justify-between px-0 py-2 mx-6 transition-all ease-in shadow-none duration-250 rounded-2xl lg:flex-nowrap lg:justify-start" navbar-main navbar-scroll="false">
+        <div class="flex items-center justify-between w-full px-4 py-1 mx-auto flex-wrap-inherit">
+          <nav class="flex items-center gap-4 justify-between w-full">
+            <div>
+              <span id="navbar-clock" class="mb-0 font-bold text-white text-lg"></span>
+              <br/>
+              <span id="navbar-date" class="text-white text-sm"></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="relative w-48">
+                <select id="graph-range" class="appearance-none w-full bg-white text-blue-600 font-semibold border-2 border-blue-400 focus:ring-2 focus:ring-blue-300 shadow-md hover:border-blue-600 transition px-3 py-2 rounded-lg text-sm pr-10">
+                  <option value="hour">Last Hour</option>
+                  <option value="day">Last Day</option>
+                  <option value="month">Last Month</option>
+                  <option value="year">Last Year</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-400">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </div>
+              </div>
+              <button id="fullscreen-toggle" class="ml-4 px-6 py-2 rounded-full font-bold text-base shadow-lg bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white hover:scale-105 hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 dark:from-blue-700 dark:via-purple-700 dark:to-pink-700 dark:text-white" title="Toggle Fullscreen">
+                <span id="fullscreen-btn-text">Fullscreen</span>
+              </button>
+            </div>
+          </nav>
+
+          <div class="flex items-center mt-2 grow sm:mt-0 sm:mr-6 md:mr-0 lg:flex lg:basis-auto">
+            <ul class="flex flex-row justify-end pl-0 mb-0 list-none md-max:w-full">
+           
+              <li class="flex items-center pl-4 xl:hidden">
+                <a href="javascript:;" class="block p-0 text-sm text-white transition-all ease-nav-brand" sidenav-trigger>
+                  <div class="w-4.5 overflow-hidden">
+                    <i class="ease mb-0.75 relative block h-0.5 rounded-sm bg-white transition-all"></i>
+                    <i class="ease mb-0.75 relative block h-0.5 rounded-sm bg-white transition-all"></i>
+                    <i class="ease relative block h-0.5 rounded-sm bg-white transition-all"></i>
+                  </div>
+                </a>
+              </li>
+              <li class="flex items-center px-4">
+                <a href="javascript:;" class="p-0 text-sm text-white transition-all ease-nav-brand">
+                  <i fixed-plugin-button-nav class="cursor-pointer fa fa-cog"></i>
+                  <!-- fixed-plugin-button-nav  -->
+                </a>
+              </li>
+
+              <!-- notifications -->
+
+              <li class="relative flex items-center pr-2">
+                <p class="hidden transform-dropdown-show"></p>
+               
+
+                <ul dropdown-menu class="text-sm transform-dropdown before:font-awesome before:leading-default before:duration-350 before:ease lg:shadow-3xl duration-250 min-w-44 before:sm:right-8 before:text-5.5 pointer-events-none absolute right-0 top-0 z-50 origin-top list-none rounded-lg border-0 border-solid border-transparent dark:shadow-dark-xl dark:bg-slate-850 bg-white bg-clip-padding px-2 py-4 text-left text-slate-500 opacity-0 transition-all before:absolute before:right-2 before:left-auto before:top-0 before:z-50 before:inline-block before:font-normal before:text-white before:antialiased before:transition-all before:content-['\f0d8'] sm:-mr-6 lg:absolute lg:right-0 lg:left-auto lg:mt-2 lg:block lg:cursor-pointer">
+                  <!-- add show class on dropdown open js -->
+                  <li class="relative mb-2">
+                    <a class="dark:hover:bg-slate-900 ease py-1.2 clear-both block w-full whitespace-nowrap rounded-lg bg-transparent px-4 duration-300 hover:bg-gray-200 hover:text-slate-700 lg:transition-colors" href="javascript:;">
+                      <div class="flex py-1">
+                        <div class="my-auto">
+                          <img src="./assets/img/team-2.jpg" class="inline-flex items-center justify-center mr-4 text-sm text-white h-9 w-9 max-w-none rounded-xl" />
+                        </div>
+                        <div class="flex flex-col justify-center">
+                          <h6 class="mb-1 text-sm font-normal leading-normal dark:text-white"><span class="font-semibold">New message</span> from Laur</h6>
+                          <p class="mb-0 text-xs leading-tight text-slate-400 dark:text-white/80">
+                            <i class="mr-1 fa fa-clock"></i>
+                            13 minutes ago
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  </li>
+
+                  <li class="relative mb-2">
+                    <a class="dark:hover:bg-slate-900 ease py-1.2 clear-both block w-full whitespace-nowrap rounded-lg px-4 transition-colors duration-300 hover:bg-gray-200 hover:text-slate-700" href="javascript:;">
+                      <div class="flex py-1">
+                        <div class="my-auto">
+                          <img src="./assets/img/small-logos/logo-spotify.svg" class="inline-flex items-center justify-center mr-4 text-sm text-white bg-gradient-to-tl from-zinc-800 to-zinc-700 dark:bg-gradient-to-tl dark:from-slate-750 dark:to-gray-850 h-9 w-9 max-w-none rounded-xl" />
+                        </div>
+                        <div class="flex flex-col justify-center">
+                          <h6 class="mb-1 text-sm font-normal leading-normal dark:text-white"><span class="font-semibold">New album</span> by Travis Scott</h6>
+                          <p class="mb-0 text-xs leading-tight text-slate-400 dark:text-white/80">
+                            <i class="mr-1 fa fa-clock"></i>
+                            1 day
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  </li>
+
+                  <li class="relative">
+                    <a class="dark:hover:bg-slate-900 ease py-1.2 clear-both block w-full whitespace-nowrap rounded-lg px-4 transition-colors duration-300 hover:bg-gray-200 hover:text-slate-700" href="javascript:;">
+                      <div class="flex py-1">
+                        <div class="inline-flex items-center justify-center my-auto mr-4 text-sm text-white transition-all duration-200 ease-nav-brand bg-gradient-to-tl from-slate-600 to-slate-300 h-9 w-9 rounded-xl">
+                          <svg width="12px" height="12px" viewBox="0 0 43 36" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                            <title>credit-card</title>
+                            <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                              <g transform="translate(-2169.000000, -745.000000)" fill="#FFFFFF" fill-rule="nonzero">
+                                <g transform="translate(1716.000000, 291.000000)">
+                                  <g transform="translate(453.000000, 454.000000)">
+                                    <path class="color-background" d="M43,10.7482083 L43,3.58333333 C43,1.60354167 41.3964583,0 39.4166667,0 L3.58333333,0 C1.60354167,0 0,1.60354167 0,3.58333333 L0,10.7482083 L43,10.7482083 Z" opacity="0.593633743"></path>
+                                    <path class="color-background" d="M0,16.125 L0,32.25 C0,34.2297917 1.60354167,35.8333333 3.58333333,35.8333333 L39.4166667,35.8333333 C41.3964583,35.8333333 43,34.2297917 43,32.25 L43,16.125 L0,16.125 Z M19.7083333,26.875 L7.16666667,26.875 L7.16666667,23.2916667 L19.7083333,23.2916667 L19.7083333,26.875 Z M35.8333333,26.875 L28.6666667,26.875 L28.6666667,23.2916667 L35.8333333,23.2916667 L35.8333333,26.875 Z"></path>
+                                  </g>
+                                </g>
+                              </g>
+                            </g>
+                          </svg>
+                        </div>
+                        <div class="flex flex-col justify-center">
+                          <h6 class="mb-1 text-sm font-normal leading-normal dark:text-white">Payment successfully completed</h6>
+                          <p class="mb-0 text-xs leading-tight text-slate-400 dark:text-white/80">
+                            <i class="mr-1 fa fa-clock"></i>
+                            2 days
+                          </p>
+                        </div>
+                      </div>
+                    </a>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <!-- end Navbar -->
+
+      <!-- Main Content -->
+      <div class="w-full p-6">
+        <!-- Countdown Timer -->
+        <div id="countdown-timer" class="mb-4 text-right text-sm text-blue-600 font-semibold"></div>
+        <!-- Graph Section -->
+        <div class="flex flex-wrap mb-6">
+          <div class="w-full">
+            <div class="border-black/12.5 dark:bg-slate-850 dark:shadow-dark-xl shadow-xl relative z-20 flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border">
+              <div class="border-black/12.5 mb-0 rounded-t-2xl border-b-0 border-solid p-6 pt-4 pb-0">
+                <h6 class="capitalize dark:text-white flex items-center" id="graph-title"></h6>
+              </div>
+              <div class="flex-auto p-4">
+                <div>
+                  <canvas id="main-graph" height="60"></canvas>
+                  <div id="last-updated" class="text-xs text-gray-400 mt-2"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Table Section -->
+        <div class="flex flex-wrap">
+          <div class="w-full">
+            <div class="border-black/12.5 dark:bg-slate-850 dark:shadow-dark-xl shadow-xl relative z-20 flex min-w-0 flex-col break-words rounded-2xl border-0 border-solid bg-white bg-clip-border">
+              <div class="border-black/12.5 mb-0 rounded-t-2xl border-b-0 border-solid p-6">
+                <h6 class="capitalize dark:text-white">Monitor Details</h6>
+                <div class="overflow-x-auto">
+                  <table class="w-full min-w-[640px] table-auto mt-4">
+                    <thead>
+                      <tr>
+                        <th class="border-b border-blue-gray-50 py-3 px-4 text-left">
+                          <p class="font-semibold text-sm text-blue-gray-400">Sparkline</p>
+                        </th>
+                        <th class="border-b border-blue-gray-50 py-3 px-4 text-left">
+                          <p class="font-semibold text-sm text-blue-gray-400">Monitor Name</p>
+                        </th>
+                        <th class="border-b border-blue-gray-50 py-3 px-4 text-left">
+                          <p class="font-semibold text-sm text-blue-gray-400">URL</p>
+                        </th>
+                        <th class="border-b border-blue-gray-50 py-3 px-4 text-left">
+                          <p class="font-semibold text-sm text-blue-gray-400">Status</p>
+                        </th>
+                        <th class="border-b border-blue-gray-50 py-3 px-4 text-left">
+                          <p class="font-semibold text-sm text-blue-gray-400">Interval</p>
+                        </th>
+                        <th class="border-b border-blue-gray-50 py-3 px-4 text-left">
+                          <p class="font-semibold text-sm text-blue-gray-400">Timeout</p>
+                        </th>
+                        <th class="border-b border-blue-gray-50 py-3 px-4 text-left">
+                          <p class="font-semibold text-sm text-blue-gray-400">Avg. Response Time</p>
+                        </th>
+                        <th class="border-b border-blue-gray-50 py-3 px-4 text-left">
+                          <p class="font-semibold text-sm text-blue-gray-400">Last Response Time</p>
+                        </th>
+                        <th class="border-b border-blue-gray-50 py-3 px-4 text-left">
+                          <p class="font-semibold text-sm text-blue-gray-400">Last Check</p>
+                        </th>
+                        
+                      </tr>
+                    </thead>
+                    <tbody id="monitors-table-body">
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End Main Content -->
+    </main>
+    <div fixed-plugin>
+      <a fixed-plugin-button class="fixed px-4 py-2 text-xl bg-white shadow-lg cursor-pointer bottom-8 right-8 z-990 rounded-circle text-slate-700">
+        <i class="py-2 pointer-events-none fa fa-cog"> </i>
+      </a>
+      <!-- -right-90 in loc de 0-->
+      <div fixed-plugin-card class="z-sticky backdrop-blur-2xl backdrop-saturate-200 dark:bg-slate-850/80 shadow-3xl w-90 ease -right-90 fixed top-0 left-auto flex h-full min-w-0 flex-col break-words rounded-none border-0 bg-white/80 bg-clip-border px-2.5 duration-200">
+        <div class="px-6 pt-4 pb-0 mb-0 border-b-0 rounded-t-2xl">
+         
+          <div class="float-right mt-6">
+            <button fixed-plugin-close-button class="inline-block p-0 mb-4 text-sm font-bold leading-normal text-center uppercase align-middle transition-all ease-in bg-transparent border-0 rounded-lg shadow-none cursor-pointer hover:-translate-y-px tracking-tight-rem bg-150 bg-x-25 active:opacity-85 dark:text-white text-slate-700">
+              <i class="fa fa-close"></i>
+            </button>
+          </div>
+          <!-- End Toggle Button -->
+        </div>
+        
+        <div class="flex-auto p-6 pt-0 overflow-auto sm:pt-4">
+         
+          <div class="mt-4">
+            <h6 class="mb-0 dark:text-white">Sidenav Type</h6>
+            <p class="text-sm leading-normal dark:text-white dark:opacity-80">Choose between 2 different sidenav types.</p>
+          </div>
+          <div class="flex">
+            <button transparent-style-btn class="inline-block w-full px-4 py-2.5 mb-2 font-bold leading-normal text-center text-white capitalize align-middle transition-all bg-blue-500 border border-transparent border-solid rounded-lg cursor-pointer text-sm xl-max:cursor-not-allowed xl-max:opacity-65 xl-max:pointer-events-none xl-max:bg-gradient-to-tl xl-max:from-blue-500 xl-max:to-violet-500 xl-max:text-white xl-max:border-0 hover:-translate-y-px dark:cursor-not-allowed dark:opacity-65 dark:pointer-events-none dark:bg-gradient-to-tl dark:from-blue-500 dark:to-violet-500 dark:text-white dark:border-0 hover:shadow-xs active:opacity-85 ease-in tracking-tight-rem shadow-md bg-150 bg-x-25 bg-gradient-to-tl from-blue-500 to-violet-500 hover:border-blue-500" data-class="bg-transparent" active-style>White</button>
+            <button white-style-btn class="inline-block w-full px-4 py-2.5 mb-2 ml-2 font-bold leading-normal text-center text-blue-500 capitalize align-middle transition-all bg-transparent border border-blue-500 border-solid rounded-lg cursor-pointer text-sm xl-max:cursor-not-allowed xl-max:opacity-65 xl-max:pointer-events-none xl-max:bg-gradient-to-tl xl-max:from-blue-500 xl-max:to-violet-500 xl-max:text-white xl-max:border-0 hover:-translate-y-px dark:cursor-not-allowed dark:opacity-65 dark:pointer-events-none dark:bg-gradient-to-tl dark:from-blue-500 dark:to-violet-500 dark:text-white dark:border-0 hover:shadow-xs active:opacity-85 ease-in tracking-tight-rem shadow-md bg-150 bg-x-25 bg-none hover:border-blue-500" data-class="bg-white">Dark</button>
+          </div>
+          <p class="block mt-2 text-sm leading-normal dark:text-white dark:opacity-80 xl:hidden">You can change the sidenav type just on desktop view.</p>
+          <!-- Navbar Fixed -->
+          <div class="flex my-4">
+            <h6 class="mb-0 dark:text-white">Navbar Fixed</h6>
+            <div class="block pl-0 ml-auto min-h-6">
+              <input navbarFixed class="rounded-10 duration-250 ease-in-out after:rounded-circle after:shadow-2xl after:duration-250 checked:after:translate-x-5.3 h-5 relative float-left mt-1 ml-auto w-10 cursor-pointer appearance-none border border-solid border-gray-200 bg-slate-800/10 bg-none bg-contain bg-left bg-no-repeat align-top transition-all after:absolute after:top-px after:h-4 after:w-4 after:translate-x-px after:bg-white after:content-[''] checked:border-blue-500/95 checked:bg-blue-500/95 checked:bg-none checked:bg-right" type="checkbox" />
+            </div>
+          </div>
+          <hr class="h-px my-6 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent " />
+          <div class="flex mt-2 mb-12">
+            <h6 class="mb-0 dark:text-white">Light / Dark</h6>
+            <div class="block pl-0 ml-auto min-h-6">
+              <input dark-toggle class="rounded-10 duration-250 ease-in-out after:rounded-circle after:shadow-2xl after:duration-250 checked:after:translate-x-5.3 h-5 relative float-left mt-1 ml-auto w-10 cursor-pointer appearance-none border border-solid border-gray-200 bg-slate-800/10 bg-none bg-contain bg-left bg-no-repeat align-top transition-all after:absolute after:top-px after:h-4 after:w-4 after:translate-x-px after:bg-white after:content-[''] checked:border-blue-500/95 checked:bg-blue-500/95 checked:bg-none checked:bg-right" type="checkbox" />
+            </div>
+          </div>
+          
+       
+          
+        </div>
+      </div>
+    </div>
+  </body>
+  <!-- Safelist Tailwind color classes for dynamic status indicator -->
+  <div style="display:none">
+    <span class="bg-emerald-500"></span>
+    <span class="bg-red-500"></span>
+  </div>
+  <!-- plugin for charts  -->
+  <script src="./assets/js/plugins/chartjs.min.js" async></script>
+  <!-- plugin for scrollbar  -->
+  <script src="./assets/js/plugins/perfect-scrollbar.min.js" async></script>
+  <!-- main script file  -->
+  <script src="./assets/js/argon-dashboard-tailwind.js?v=1.0.1" async></script>
+  <script src="key.js"></script>
+  <script>
+
+
+
+// Use window.UPTIMEROBOT_API_KEY loaded from key.js
+const API_KEY = window.UPTIMEROBOT_API_KEY;
+const API_URL = 'https://api.uptimerobot.com/v2/getMonitors';
+const REFRESH_INTERVAL = 60000; // Increased to 60 seconds to avoid rate limit
+let monitors = [];
+let selectedMonitor = null;
+let chart = null;
+let lastUptimeRatios = [];
+let waveInterval = null;
+let lastUpdateTime = Date.now();
+
+async function fetchMonitors() {
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: API_KEY,
+        format: 'json',
+        logs: 1,
+        response_times: 1,
+        response_times_limit: 50
+      })
+    });
+
+    // Check if the response is JSON
+    const text = await response.text();
+    try {
+      const data = JSON.parse(text);
+      if (data.stat === "fail" && data.error && data.error.message) {
+        console.error('UptimeRobot API error:', data.error.message);
+        return [];
+      }
+      return data.monitors || [];
+    } catch (jsonError) {
+      // Not JSON, likely a rate limit or server error
+      console.error('Non-JSON response:', text);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching monitors:', error);
+    return [];
+  }
+}
+
+function renderMonitorList(monitors) {
+  const list = document.getElementById('monitor-list');
+  const tableBody = document.getElementById('monitors-table-body');
+  
+  // Clear existing content
+  list.innerHTML = '';
+  tableBody.innerHTML = '';
+  
+  monitors.forEach((monitor, idx) => {
+    const status = monitor.status === 2 ? 'text-emerald-500' : 'text-red-500';
+    const statusIcon = monitor.status === 2 ? 'fa-check-circle' : 'fa-exclamation-circle';
+    const statusText = monitor.status === 2 ? 'Online' : 'Offline';
+    const pulseClass = monitor.status === 2 ? 'animate-pulse' : '';
+    
+    // Sidebar item
+    const li = document.createElement('li');
+    li.className = 'mt-0.5 w-full';
+    li.innerHTML = `
+      <a class="py-2.7 ${selectedMonitor && selectedMonitor.id === monitor.id ? 'bg-blue-500/13' : ''} text-sm ease-nav-brand my-0 mx-2 flex items-center whitespace-nowrap rounded-lg px-4 transition-colors dark:text-white dark:opacity-80" href="#">
+        <span class="status-pulse ${monitor.status === 2 ? 'online' : 'offline'} mr-2"></span>
+        <span class="ml-1 duration-300 opacity-100 pointer-events-none ease">${monitor.friendly_name}</span>
+      </a>
+    `;
+    li.onclick = (e) => {
+      e.preventDefault();
+      selectedMonitor = monitor;
+      saveSelectedMonitorId(selectedMonitor.id);
+      renderMonitorList(monitors);
+      updateGraphForMonitor(selectedMonitor);
+    };
+    list.appendChild(li);
+
+    // Table row
+    const tr = document.createElement('tr');
+    const interval = monitor.interval ? `${monitor.interval}s` : 'N/A';
+    const timeout = monitor.timeout ? `${monitor.timeout}s` : 'N/A';
+    const avgResponseTime = (monitor.average_response_time && monitor.average_response_time !== '0.000') ? `${parseFloat(monitor.average_response_time).toFixed(0)}ms` : 'N/A';
+    const lastResponseTime = (monitor.response_times && monitor.response_times.length > 0) ? `${monitor.response_times[monitor.response_times.length - 1].value}ms` : 'N/A';
+    let lastCheck = 'N/A';
+    if (monitor.response_times && monitor.response_times.length > 0) {
+      const lastRT = monitor.response_times[monitor.response_times.length - 1];
+      const date = new Date(lastRT.datetime * 1000);
+      lastCheck = isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
+    } else if (monitor.last_check && !isNaN(monitor.last_check)) {
+      const date = new Date(monitor.last_check * 1000);
+      lastCheck = isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
+    } else if (monitor.logs && monitor.logs.length > 0) {
+      const lastLog = monitor.logs[0];
+      const date = new Date(lastLog.datetime * 1000);
+      lastCheck = isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
+    }
+    let lastDowntimeReason = 'N/A';
+    if (monitor.logs && monitor.logs.length > 0) {
+      const lastLog = monitor.logs.find(log => log.type !== 2); // Not "OK"
+      if (lastLog && lastLog.reason && lastLog.reason.detail) {
+        lastDowntimeReason = lastLog.reason.detail;
+      }
+    }
+    
+    tr.className = '';
+    tr.innerHTML = `
+      <td class="py-3 px-4 border-b border-blue-gray-50"><p class="font-semibold text-sm text-blue-gray-600">${monitor.friendly_name}</p></td>
+      <td class="py-3 px-4 border-b border-blue-gray-50"><p class="font-normal text-sm text-blue-gray-600">${monitor.url}</p></td>
+      <td class="py-3 px-4 border-b border-blue-gray-50"><div class="flex items-center gap-2"><p class="font-normal text-sm ${status}">${statusText}</p></div></td>
+      <td class="py-3 px-4 border-b border-blue-gray-50"><p class="font-normal text-sm text-blue-gray-600">${interval}</p></td>
+      <td class="py-3 px-4 border-b border-blue-gray-50"><p class="font-normal text-sm text-blue-gray-600">${timeout}</p></td>
+      <td class="py-3 px-4 border-b border-blue-gray-50"><p class="font-normal text-sm text-blue-gray-600">${avgResponseTime}</p></td>
+      <td class="py-3 px-4 border-b border-blue-gray-50"><p class="font-normal text-sm text-blue-gray-600">${lastResponseTime}</p></td>
+      <td class="py-3 px-4 border-b border-blue-gray-50"><p class="font-normal text-sm text-blue-gray-600">${lastCheck}</p></td>
+      <td class="py-3 px-4 border-b border-blue-gray-50"><p class="font-normal text-sm text-blue-gray-600">${lastDowntimeReason}</p></td>
+    `;
+    tr.onclick = (e) => {
+      selectedMonitor = monitor;
+      saveSelectedMonitorId(selectedMonitor.id);
+      renderMonitorList(monitors);
+      updateGraphForMonitor(selectedMonitor);
+    };
+    tr.style.cursor = 'pointer';
+    tableBody.appendChild(tr);
+  });
+}
+
+function updateGraphForMonitor(monitor) {
+  const canvas = document.getElementById('chart-line');
+  const ctx = canvas.getContext('2d');
+  const data = getUptimeData(monitor);
+  lastUptimeRatios = data.map(d => d.y);
+
+  // Update title and status indicator as one element
+  const statusColor = monitor.status === 2 ? 'bg-emerald-500' : 'bg-red-500';
+  document.getElementById('graph-title').innerHTML = `
+    ${monitor.friendly_name}
+    <span class="inline-block w-3 h-3 rounded-full ml-2 animate-pulse ${statusColor}"></span>
+  `;
+
+  // Properly destroy previous chart instance if it exists
+  if (window.chart && typeof window.chart.destroy === 'function') {
+    window.chart.destroy();
+  }
+
+  // Optionally clear the canvas
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  window.chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [{
+        label: 'Response Time (ms)',
+        data: data, // Use {x, y} pairs
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: {
+        duration: 750,
+        easing: 'easeInOutQuart'
+      },
+      plugins: { 
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            title: function(tooltipItems) {
+              // Show full date and time in tooltip
+              return tooltipItems[0].parsed.x
+                ? new Date(tooltipItems[0].parsed.x).toLocaleString()
+                : '';
+            }
+          }
+        }
+      },
+      scales: {
+        x: { 
+          type: 'time',
+          time: {
+            tooltipFormat: 'PPpp', // Pretty print date and time
+            displayFormats: {
+              minute: 'HH:mm',
+              hour: 'HH:mm',
+              second: 'HH:mm:ss'
+            }
+          },
+          title: {
+            display: true,
+            text: 'Time'
+          },
+          grid: {
+            display: false
+          }
+        },
+        y: { 
+          display: true, 
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Response Time (s)'
+          },
+          grid: {
+            color: 'rgba(0,0,0,0.1)'
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      }
+    }
+  });
+  updateLastUpdated();
+}
+
+// --- Main Graph Logic ---
+let mainGraphChart = null;
+let ecgAnimInterval = null;
+let ecgData = [];
+let ecgLabels = [];
+let ecgPhase = 0;
+let ecgBase = 100;
+let ecgAmplitude = 20;
+let ecgFreq = 0.2;
+
+function startECGAnimation() {
+  stopECGAnimation();
+  if (!mainGraphChart || ecgData.length === 0) return;
+  // Calculate amplitude and base from real data
+  let min = Math.min(...ecgData);
+  let max = Math.max(...ecgData);
+  ecgAmplitude = Math.max((max - min) * 2, 0.1); // minimum amplitude for visibility
+  ecgBase = (max + min) / 2;
+  ecgPhase = 0;
+  ecgAnimInterval = setInterval(() => {
+    ecgData.shift();
+    ecgLabels.shift();
+    ecgPhase += ecgFreq;
+    let noise = (Math.random() - 0.5) * ecgAmplitude * 0.2;
+    let next = ecgBase + ecgAmplitude * Math.sin(ecgPhase) + noise;
+    ecgData.push(next);
+    // Add new label (current time for live x-axis)
+    const now = new Date();
+    const timeLabel = now.toLocaleTimeString();
+    ecgLabels.push(timeLabel);
+    // Auto-center y-axis
+    let min = Math.min(...ecgData);
+    let max = Math.max(...ecgData);
+    let range = max - min;
+    let pad = Math.max(range * 0.5, 0.1);
+    let yMin = min - pad;
+    let yMax = max + pad;
+    if (yMin < mainGraphChart.options.scales.y.min || yMax > mainGraphChart.options.scales.y.max) {
+      mainGraphChart.options.scales.y.min = yMin;
+      mainGraphChart.options.scales.y.max = yMax;
+    }
+    mainGraphChart.data.labels = [...ecgLabels];
+    mainGraphChart.data.datasets[0].data = [...ecgData];
+    mainGraphChart.update('none');
+  }, 300);
+}
+
+function stopECGAnimation() {
+  if (ecgAnimInterval) clearInterval(ecgAnimInterval);
+  ecgAnimInterval = null;
+}
+
+function updateGraphWithRealData(data, labels) {
+  stopECGAnimation();
+  ecgData = [...data];
+  // Only update labels on real data
+  ecgLabels = [...labels];
+  if (mainGraphChart) {
+    let min = Math.min(...ecgData);
+    let max = Math.max(...ecgData);
+    let range = max - min;
+    let pad = Math.max(range * 0.5, 10);
+    let yMin = min - pad;
+    let yMax = max + pad;
+    mainGraphChart.options.scales.y.min = yMin;
+    mainGraphChart.options.scales.y.max = yMax;
+    mainGraphChart.data.labels = [...ecgLabels];
+    mainGraphChart.data.datasets[0].data = [...ecgData];
+    mainGraphChart.update();
+  }
+  startECGAnimation();
+}
+
+function renderMainGraph(monitor) {
+  updateGraphTitle(monitor);
+  const canvas = document.getElementById('main-graph');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let data = [];
+  let labels = [];
+  // --- Filter logic ---
+  let range = getSavedGraphRange() || 'hour';
+  const now = Date.now() / 1000; // seconds
+  let cutoff = 0;
+  if (range === 'hour') cutoff = now - 60 * 60;
+  else if (range === 'day') cutoff = now - 60 * 60 * 24;
+  else if (range === 'month') cutoff = now - 60 * 60 * 24 * 30;
+  else if (range === 'year') cutoff = now - 60 * 60 * 24 * 365;
+  if (monitor && monitor.response_times && monitor.response_times.length > 0) {
+    let points = monitor.response_times.filter(rt => rt.datetime >= cutoff);
+    if (points.length === 0) points = monitor.response_times.slice(-50); // fallback
+    data = points.map(rt => rt.value);
+    labels = points.map(rt => new Date(rt.datetime * 1000).toLocaleTimeString());
+    data = data.reverse();
+    labels = labels.reverse();
+  }
+  // Remove previous chart instance if any
+  if (mainGraphChart && typeof mainGraphChart.destroy === 'function') {
+    mainGraphChart.destroy();
+  }
+  mainGraphChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Response Time (ms)',
+        data: data,
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgb(54, 162, 235)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            title: function(tooltipItems) {
+              return tooltipItems[0].label || '';
+            },
+            label: function(tooltipItem) {
+              return `Response: ${tooltipItem.parsed.y} ms`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Time' },
+          grid: { display: true, color: 'rgba(0,0,0,0.05)' },
+          ticks: { autoSkip: true, maxTicksLimit: 20 }
+        },
+        y: {
+          title: { display: true, text: 'Response Time (s)' },
+          grid: { color: 'rgba(0,0,0,0.1)' },
+          beginAtZero: true,
+          ticks: {
+            callback: val => (val / 1000).toFixed(2) + ' s'
+          }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      }
+    }
+  });
+  updateLastUpdated();
+  // Start ECG animation with real data
+  updateGraphWithRealData(data, labels);
+}
+
+function updateGraphTitle(monitor) {
+  const titleEl = document.getElementById('graph-title');
+  if (!titleEl || !monitor) return;
+  const isOnline = monitor.status === 2;
+  const indicatorClass = isOnline ? 'status-pulse online' : 'status-pulse offline';
+  // Add indicator styles if not present
+  if (!document.getElementById('status-pulse-style')) {
+    const style = document.createElement('style');
+    style.id = 'status-pulse-style';
+    style.innerHTML = `
+      .status-pulse { display: inline-block; margin-right: 8px; width: 16px; height: 16px; border-radius: 50%; animation: pulse 1.5s infinite; }
+      .status-pulse.online { background: #28a745; box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+      .status-pulse.offline { background: #dc3545; box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); animation: pulseOffline 1.5s infinite; }
+      @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+      @keyframes pulseOffline { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+    `;
+    document.head.appendChild(style);
+  }
+  titleEl.innerHTML = `
+    <span class="${indicatorClass}"></span>${monitor.friendly_name}
+  `;
+}
+
+function updateLastUpdated() {
+  const el = document.getElementById('last-updated');
+  if (el) {
+    const now = new Date();
+    let next = nextUpdateTimestamp ? new Date(nextUpdateTimestamp) : new Date(now.getTime() + REFRESH_INTERVAL);
+    let secondsLeft = Math.max(0, Math.round((next - now) / 1000));
+    el.textContent = 'Last updated: ' + now.toLocaleTimeString() +
+      ' | Next update in: ' + secondsLeft + 's';
+    console.log('updateLastUpdated called, secondsLeft:', secondsLeft); // Debug
+  }
+}
+
+function updateMainGraphOnSelection() {
+  if (selectedMonitor) renderMainGraph(selectedMonitor);
+}
+
+// --- Monitor Selection Persistence ---
+function saveSelectedMonitorId(id) {
+  try {
+    localStorage.setItem('selectedMonitorId', id);
+  } catch (e) {}
+}
+function getSavedSelectedMonitorId() {
+  try {
+    return localStorage.getItem('selectedMonitorId');
+  } catch (e) { return null; }
+}
+// --- Graph Range Persistence ---
+function saveGraphRange(range) {
+  try {
+    localStorage.setItem('graphRange', range);
+  } catch (e) {}
+}
+function getSavedGraphRange() {
+  try {
+    return localStorage.getItem('graphRange');
+  } catch (e) { return null; }
+}
+// --- Fullscreen State Persistence ---
+function saveFullscreenState(isFullscreen) {
+  try {
+    localStorage.setItem('wasFullscreen', isFullscreen ? '1' : '0');
+  } catch (e) {}
+}
+function getSavedFullscreenState() {
+  try {
+    return localStorage.getItem('wasFullscreen') === '1';
+  } catch (e) { return false; }
+}
+// --- Patch monitor selection to save state ---
+function patchMonitorSelection(monitors) {
+  // Patch sidebar monitor list
+  const list = document.getElementById('monitor-list');
+  if (!list) return;
+  Array.from(list.children).forEach((li, idx) => {
+    li.onclick = (e) => {
+      e.preventDefault();
+      selectedMonitor = monitors[idx];
+      saveSelectedMonitorId(selectedMonitor.id);
+      renderMonitorList(monitors);
+      updateGraphForMonitor(selectedMonitor);
+    };
+  });
+  // Patch table selection
+  const tableBody = document.getElementById('monitors-table-body');
+  if (tableBody) {
+    Array.from(tableBody.children).forEach((tr, idx) => {
+      tr.onclick = (e) => {
+        selectedMonitor = monitors[idx];
+        saveSelectedMonitorId(selectedMonitor.id);
+        renderMonitorList(monitors);
+        updateGraphForMonitor(selectedMonitor);
+      };
+      tr.style.cursor = 'pointer';
+    });
+  }
+}
+// Patch renderMonitorList to call patchMonitorSelection
+const origRenderMonitorList2 = renderMonitorList;
+renderMonitorList = function(monitors) {
+  origRenderMonitorList2(monitors);
+  patchMonitorSelection(monitors);
+  updateMainGraphOnSelection();
+}
+
+// Patch refreshData to update main graph after data refresh
+const origRefreshData2 = refreshData;
+refreshData = async function() {
+  await origRefreshData2();
+  updateMainGraphOnSelection();
+}
+
+// Patch init to update main graph on load
+const origInit2 = init;
+init = async function() {
+  await origInit2();
+  updateMainGraphOnSelection();
+}
+
+// --- Clean, robust refreshData and init implementations ---
+async function refreshData() {
+  try {
+    const newMonitors = await fetchMonitors();
+    if (!Array.isArray(newMonitors) || newMonitors.length === 0) {
+      console.warn("❌ Refresh failed: No monitor data received or API rate-limited at", new Date().toLocaleTimeString());
+      return; // Skip UI updates
+    }
+    monitors = newMonitors;
+
+    // Update selectedMonitor if possible
+    if (selectedMonitor) {
+      const updated = monitors.find(m => m.id === selectedMonitor.id);
+      if (updated) {
+        selectedMonitor = updated;
+      } else {
+        selectedMonitor = monitors[0];
+      }
+    } else {
+      selectedMonitor = monitors[0];
+    }
+
+    renderMonitorList(monitors);
+    renderSidebarMonitorList(monitors);
+    renderMainGraph(selectedMonitor); // this will update and restart animation
+    startCountdown();
+    console.log("✅ Refreshed at", new Date().toLocaleTimeString());
+  } catch (err) {
+    console.error("❌ Refresh failed due to error:", err, "at", new Date().toLocaleTimeString());
+    // Do not update UI
+  }
+}
+
+async function init() {
+  try {
+    monitors = await fetchMonitors();
+    if (!Array.isArray(monitors) || monitors.length === 0) {
+      console.warn("❌ Initial load failed: No monitor data received or API rate-limited at", new Date().toLocaleTimeString());
+      startCountdown();
+      setInterval(refreshData, REFRESH_INTERVAL);
+      return;
+    }
+
+    // Restore selected monitor from localStorage if possible
+    let savedId = getSavedSelectedMonitorId();
+    selectedMonitor = monitors.find(m => m.id == savedId) || monitors[0];
+
+    renderMonitorList(monitors);
+    renderSidebarMonitorList(monitors);
+    renderMainGraph(selectedMonitor);
+    startCountdown();
+    setInterval(refreshData, REFRESH_INTERVAL);
+    console.log("✅ Initial load complete at", new Date().toLocaleTimeString());
+  } catch (err) {
+    console.error("❌ Initial load failed due to error:", err, "at", new Date().toLocaleTimeString());
+    startCountdown();
+    setInterval(refreshData, REFRESH_INTERVAL);
+  }
+}
+
+// Remove unused function
+function renderSidebarMonitorList(monitors) {
+  const list = document.getElementById('sidebar-monitor-list');
+  if (list) list.innerHTML = '';
+}
+
+let countdown = REFRESH_INTERVAL / 1000;
+let countdownInterval = null;
+let nextUpdateTimestamp = null; // Track next update time
+let lastUpdatedInterval = null; // Interval for updating 'Last updated' section
+
+function startCountdown() {
+  const timerEl = document.getElementById('countdown-timer');
+  if (!timerEl) return;
+  if (lastUpdatedInterval) clearInterval(lastUpdatedInterval);
+  nextUpdateTimestamp = Date.now() + REFRESH_INTERVAL;
+
+  // Start live update for 'Last updated' section
+  function updateNextUpdateUI() {
+    const el = document.getElementById('last-updated');
+    if (!el) return;
+    const now = new Date();
+    let secondsLeft = Math.max(0, Math.round((nextUpdateTimestamp - now.getTime()) / 1000));
+    el.textContent = 'Last updated: ' + now.toLocaleTimeString() +
+      ' | Next update in: ' + secondsLeft + 's';
+  }
+  lastUpdatedInterval = setInterval(updateNextUpdateUI, 1000);
+  updateNextUpdateUI(); // Initial call
+
+  if (window.countdownInterval) clearInterval(window.countdownInterval);
+  let countdown = REFRESH_INTERVAL / 1000;
+  // Remove timerEl.classList.remove('low');
+  window.countdownInterval = setInterval(() => {
+    countdown--;
+    if (countdown <= 0) {
+      countdown = 0;
+      clearInterval(window.countdownInterval);
+    }
+    // Remove the logic that adds/removes the 'low' class
+    // Only update the text, do not change color or animate
+  }, 1000);
+}
+
+// Patch refreshData to restart countdown after each check
+const origRefreshData = refreshData;
+refreshData = async function() {
+  await origRefreshData();
+  renderSidebarMonitorList(monitors);
+  startCountdown();
+}
+
+// Patch init to start countdown on load
+const origInit = init;
+init = async function() {
+  await origInit();
+  startCountdown();
+}
+
+// Start the application
+init();
+
+// --- Graph Range Filter Event ---
+document.addEventListener('DOMContentLoaded', function() {
+  const rangeSel = document.getElementById('graph-range');
+  if (!rangeSel) return;
+  // Restore saved value
+  const saved = getSavedGraphRange();
+  if (saved) rangeSel.value = saved;
+  rangeSel.addEventListener('change', function() {
+    saveGraphRange(rangeSel.value);
+    stopECGAnimation();
+    if (selectedMonitor) renderMainGraph(selectedMonitor);
+  });
+});
+
+// Fullscreen toggle logic
+document.addEventListener('DOMContentLoaded', function() {
+  const btn = document.getElementById('fullscreen-toggle');
+  const btnText = document.getElementById('fullscreen-btn-text');
+  function updateBtnText() {
+    if (!document.fullscreenElement) {
+      btnText.textContent = 'Fullscreen';
+      saveFullscreenState(false);
+    } else {
+      btnText.textContent = 'Exit Fullscreen';
+      saveFullscreenState(true);
+    }
+  }
+  if (btn) {
+    btn.addEventListener('click', function() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    });
+    document.addEventListener('fullscreenchange', updateBtnText);
+    updateBtnText();
+  }
+  // Show prompt if user was in fullscreen before reload
+  if (getSavedFullscreenState() && !document.fullscreenElement) {
+    let prompt = document.createElement('div');
+    prompt.style.position = 'fixed';
+    prompt.style.top = '20px';
+    prompt.style.right = '20px';
+    prompt.style.background = '#2563eb';
+    prompt.style.color = 'white';
+    prompt.style.padding = '12px 20px';
+    prompt.style.borderRadius = '8px';
+    prompt.style.zIndex = 9999;
+    prompt.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+    prompt.innerHTML = 'You were in fullscreen before reload. <button id="reenter-fs-btn" style="margin-left:10px;padding:4px 12px;background:white;color:#2563eb;border:none;border-radius:4px;cursor:pointer;">Re-enter Fullscreen</button>';
+    document.body.appendChild(prompt);
+    document.getElementById('reenter-fs-btn').onclick = function() {
+      document.documentElement.requestFullscreen();
+      prompt.remove();
+    };
+    setTimeout(() => { if (prompt.parentNode) prompt.remove(); }, 15000);
+  }
+});
+
+// Auto-reload the page every 1 minute
+// setInterval(() => {
+//   window.location.reload();
+// }, 60000); // 60000 ms = 1 minute
+
+</script>
+<script>
+  function updateNavbarClock() {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // the hour '0' should be '12'
+    const hourStr = String(hours).padStart(2, '0');
+    const clockEl = document.getElementById('navbar-clock');
+    if (clockEl) {
+      clockEl.textContent = `${hourStr}:${minutes}:${seconds} ${ampm}`;
+    }
+    // Update the date below the clock
+    const dateEl = document.getElementById('navbar-date');
+    if (dateEl) {
+      const day = now.toLocaleDateString(undefined, { weekday: 'long' });
+      const dateStr = now.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+      dateEl.textContent = `${day}, ${dateStr}`;
+    }
+  }
+  setInterval(updateNavbarClock, 1000);
+  updateNavbarClock();
+</script>
+</html>
+
