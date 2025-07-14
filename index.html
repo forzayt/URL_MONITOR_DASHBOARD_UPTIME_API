@@ -77,6 +77,8 @@
         <div class="flex items-center justify-between w-full px-4 py-1 mx-auto flex-wrap-inherit">
           <nav>
             <span id="navbar-clock" class="mb-0 font-bold text-white text-lg"></span>
+            <br/>
+            <span id="navbar-date" class="text-white text-sm"></span>
           </nav>
 
           <div class="flex items-center mt-2 grow sm:mt-0 sm:mr-6 md:mr-0 lg:flex lg:basis-auto">
@@ -970,6 +972,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const clockEl = document.getElementById('navbar-clock');
     if (clockEl) {
       clockEl.textContent = `${hourStr}:${minutes}:${seconds} ${ampm}`;
+    }
+    // Update the date below the clock
+    const dateEl = document.getElementById('navbar-date');
+    if (dateEl) {
+      const day = now.toLocaleDateString(undefined, { weekday: 'long' });
+      const dateStr = now.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+      dateEl.textContent = `${day}, ${dateStr}`;
     }
   }
   setInterval(updateNavbarClock, 1000);
