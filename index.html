@@ -18,6 +18,23 @@
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <!-- Main Styling -->
     <link href="./assets/css/argon-dashboard-tailwind.css?v=1.0.1" rel="stylesheet" />
+    <style>
+  #countdown-timer {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2563eb; /* Tailwind blue-600 */
+    transition: color 0.3s;
+  }
+  #countdown-timer.low {
+    color: #dc2626; /* Tailwind red-600 */
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+</style>
   </head>
 
   <body class="m-0 font-sans text-base antialiased font-normal dark:bg-slate-900 leading-default bg-gray-50 text-slate-500">
@@ -633,7 +650,10 @@ function updateGraphTitle(monitor) {
 function updateLastUpdated() {
   const el = document.getElementById('last-updated');
   if (el) {
-    el.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+    const now = new Date();
+    const next = new Date(now.getTime() + REFRESH_INTERVAL);
+    el.textContent = 'Last updated: ' + now.toLocaleTimeString() +
+      ' | Next update: ' + next.toLocaleTimeString();
   }
 }
 
@@ -699,14 +719,20 @@ function startCountdown() {
   if (!timerEl) return;
   if (countdownInterval) clearInterval(countdownInterval);
   countdown = REFRESH_INTERVAL / 1000;
-  timerEl.textContent = `Next check in: ${countdown}s`;
+  timerEl.textContent = `Next update in: ${countdown}s`;
+  timerEl.classList.remove('low');
   countdownInterval = setInterval(() => {
     countdown--;
     if (countdown <= 0) {
       countdown = 0;
       clearInterval(countdownInterval);
     }
-    timerEl.textContent = `Next check in: ${countdown}s`;
+    timerEl.textContent = `Next update in: ${countdown}s`;
+    if (countdown <= 10) {
+      timerEl.classList.add('low');
+    } else {
+      timerEl.classList.remove('low');
+    }
   }, 1000);
 }
 
